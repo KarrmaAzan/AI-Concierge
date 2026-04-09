@@ -1,65 +1,123 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useEffect, useRef, useState } from 'react'
+import { Box } from '@mui/material'
+import { useAudio } from '@/providers/AudioProvider'
+import { useDispatch } from 'react-redux'
+import { markViewed } from '@/store/slices/uiSlice'
+import { logEvent } from '@/lib/analytics'
+
+import Activation from '@/components/Activation'
+import IntroGreeting from '@/components/IntroGreeting'
+import Hero from '@/components/Hero'
+import Services from '@/components/Services'
+import Deliverables from '@/components/Deliverables'
+import Process from '@/components/Process'
+import Proof from '@/components/Proof'
+import CTA from '@/components/CTA'
+import Subtitles from '@/components/SubtitleOverlay'
+import VoiceStatus from '@/components/VoiceStatus'
+
+const introText =
+  'Welcome to AMHRL. This is a guided client acquisition experience. Scroll down after this introduction. I will walk you through each part of the system.'
+
+const narrationMap: Record<string, string> = {
+  hero: 'This is where the experience begins. AMHRL is designed to feel like a real product, not a static landing page. It introduces the offer with clarity, tone, and intent.',
+  services:
+    'Here you choose what you actually need. Whether it is a website, a web app, or an AI system, the goal is to shape the build around your business instead of forcing your business into a generic template.',
+  deliverables:
+    'The deliverables are not random assets. You get a complete system built to attract attention, guide the visitor, and move the right people toward action.',
+  process:
+    'This section explains how the work gets done. First we define the right system, then we design the experience, then we build the product around what makes the most sense to launch first.',
+  proof:
+    'This works because the interface, the story, and the offer all align. When those pieces are coherent, the product feels stronger and the business feels more trustworthy.',
+  cta:
+    'This is the decision point. You can explore more work, or book a call and I will help you map out what your business actually needs to build next.',
+}
+
+export default function Page() {
+  const { play, currentKey } = useAudio()
+  const dispatch = useDispatch()
+
+  const [activated, setActivated] = useState(false)
+  const [showIntro, setShowIntro] = useState(false)
+  const [introFinished, setIntroFinished] = useState(false)
+
+  const activeSectionRef = useRef<string | null>(null)
+  const lastTriggerAtRef = useRef<number>(0)
+
+  const handleActivated = async () => {
+    setActivated(true)
+    setShowIntro(true)
+
+    await play('intro', introText)
+
+    setShowIntro(false)
+    setIntroFinished(true)
+  }
+
+  useEffect(() => {
+    if (!activated || !introFinished) return
+
+    const sections = Array.from(document.querySelectorAll<HTMLElement>('section[id]'))
+
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+
+        if (!visibleEntries.length) return
+
+        const topEntry = visibleEntries[0]
+        const id = topEntry.target.id
+
+        if (!id || !narrationMap[id]) return
+
+        const now = Date.now()
+
+        if (activeSectionRef.current === id && currentKey === id) return
+        if (now - lastTriggerAtRef.current < 700) return
+
+        activeSectionRef.current = id
+        lastTriggerAtRef.current = now
+
+        dispatch(markViewed(id))
+        void logEvent({
+          type: 'section_viewed',
+          metadata: { section: id },
+        })
+
+        await play(id, narrationMap[id])
+      },
+      {
+        threshold: [0.35, 0.5, 0.65, 0.8],
+        rootMargin: '-10% 0px -10% 0px',
+      }
+    )
+
+    sections.forEach((section) => observer.observe(section))
+
+    return () => observer.disconnect()
+  }, [activated, introFinished, play, currentKey, dispatch])
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    <>
+      {!activated && <Activation onActivated={handleActivated} />}
+      {showIntro && <IntroGreeting text={introText} />}
+
+      {introFinished && (
+        <Box>
+          <Hero />
+          <Services />
+          <Deliverables />
+          <Process />
+          <Proof />
+          <CTA />
+          <Subtitles />
+          <VoiceStatus />
+        </Box>
+      )}
+    </>
+  )
 }
