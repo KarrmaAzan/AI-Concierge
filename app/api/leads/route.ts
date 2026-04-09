@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '../../../lib/supabase'
 
 type LeadBody = {
   name?: string
@@ -43,15 +43,26 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('Supabase leads insert error:', error)
-      return Response.json({ error: error.message }, { status: 500 })
+      return Response.json(
+        {
+          error: error.message,
+          details: error.details ?? null,
+          hint: error.hint ?? null,
+          code: error.code ?? null,
+        },
+        { status: 500 }
+      )
     }
 
     return Response.json({
       success: true,
       lead: data,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Leads route error:', error)
-    return Response.json({ error: 'Failed to store lead' }, { status: 500 })
+    return Response.json(
+      { error: error?.message || 'Failed to store lead' },
+      { status: 500 }
+    )
   }
 }
