@@ -1,36 +1,155 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AMHRL
 
-## Getting Started
+AMHRL is a cinematic, AI-guided landing experience designed to convert visitors into qualified clients.
 
-First, run the development server:
+Instead of static content, the interface speaks, guides, and adapts in real time — creating a structured journey from awareness to action.
+
+---
+
+## ✦ Core Concept
+
+This is not a traditional landing page.
+
+AMHRL is a **guided system**:
+- The experience begins with an activation interaction
+- AI narration introduces the product and directs user flow
+- Each section is triggered intentionally through scroll
+- User intent is captured and carried into conversion
+- The journey ends in a high-quality call or portfolio exploration
+
+---
+
+## ✦ Features
+
+### 🎧 AI Voice Narration
+- OpenAI Text-to-Speech integration
+- Dynamic narration per section
+- Intro greeting sequence before content begins
+- No overlapping audio system
+
+### 🧠 Guided User Flow
+- Activation entry (Yin-Yang trigger)
+- Auto-scroll progression after selection
+- Section-based narration tied to viewport
+- Intent-based experience (service selection)
+
+### 📊 Conversion System
+- Invisible lead capture (no friction UX)
+- Supabase event tracking
+- Service selection passed into CTA + booking flow
+- Calendly integration with prefilled data
+
+### 🎬 Cinematic UI
+- Dark ambient gradient environment
+- Typewriter-style subtitles synced to narration
+- Smooth transitions using Framer Motion
+- Structured, intentional layout (no template patterns)
+
+---
+
+## ✦ Tech Stack
+
+- **Next.js (App Router)**
+- **TypeScript**
+- **Material UI (MUI)**
+- **Framer Motion**
+- **Redux Toolkit**
+- **React Context (Audio System)**
+- **Supabase (Database + Analytics)**
+- **OpenAI API (TTS)**
+- **Calendly Integration**
+
+---
+
+## ✦ Architecture Overview
+
+app/
+api/
+tts/ → OpenAI speech generation
+events/ → analytics tracking
+leads/ → lead capture
+layout.tsx → root layout
+page.tsx → main experience
+
+components/
+sections/ → Hero, Services, Deliverables, etc.
+IntroGreeting → activation intro sequence
+SubtitleDisplay → typewriter subtitles
+CTA → conversion endpoint
+
+context/
+AudioProvider → global narration system
+
+store/
+slices/ → UI + selection state
+store.ts → Redux config
+
+lib/
+analytics.ts → Supabase event helpers
+
+
+---
+
+## ✦ Environment Variables
+
+Create a `.env.local` file:
+
+
+OPENAI_API_KEY=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_CALENDLY_URL=
+
+
+---
+
+## ✦ Running Locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000
+✦ Build
+npm run build
+npm start
+✦ Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Recommended: Vercel
 
-## Learn More
+Push repo to GitHub
+Import into Vercel
+Add environment variables
+Deploy
+✦ Purpose
 
-To learn more about Next.js, take a look at the following resources:
+AMHRL is built as a client acquisition system, not just a website.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+It is designed to:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Increase engagement
+Guide user intent
+Qualify leads automatically
+Create a premium first impression
+✦ Future Improvements
+Audio caching to reduce API usage
+Multi-voice narration modes
+Personalization based on user behavior
+Advanced analytics dashboard
+Expanded portfolio integration
+✦ License
 
-## Deploy on Vercel
+Private / Client Use
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Then run:
+
+```bash
+git add .
+git commit -m "Added README"
+git push

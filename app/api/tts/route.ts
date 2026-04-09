@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -10,21 +11,20 @@ if (!apiKey) {
 
 const openai = new OpenAI({ apiKey })
 
-const requestMap = new Map<string, number[]>()
-
-function isRateLimited(key: string, limit = 8, windowMs = 60_000) {
-  const now = Date.now()
-  const timestamps = requestMap.get(key) ?? []
-  const recent = timestamps.filter((time) => now - time < windowMs)
-
-  if (recent.length >= limit) {
-    requestMap.set(key, recent)
-    return true
+function getClientIp(req: Request) {
+  const forwardedFor = req.headers.get('x-forwarded-for')
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim()
   }
 
-  recent.push(now)
-  requestMap.set(key, recent)
-  return false
+  const realIp = req.headers.get('x-real-ip')
+  if (realIp) return realIp.trim()
+
+  return 'unknown'
+}
+
+function getSessionId(req: Request) {
+  return req.headers.get('x-amhrl-session-id')?.trim() || 'no-session'
 }
 
 export async function GET() {
@@ -33,13 +33,30 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const forwardedFor = req.headers.get('x-forwarded-for') ?? 'unknown'
-    const rateKey = forwardedFor.split(',')[0].trim()
+    const ip = getClientIp(req)
+    const sessionId = getSessionId(req)
+    const limitKey = `${ip}:${sessionId}`
 
-    if (isRateLimited(rateKey)) {
+    const rate = await checkRateLimit({
+      key: limitKey,
+      route: 'tts',
+      limit: 12,
+      windowSeconds: 300,
+    })
+
+    if (!rate.allowed) {
       return Response.json(
-        { error: 'Rate limit exceeded for voice requests.' },
-        { status: 429 }
+        {
+          error: 'Voice rate limit exceeded. Please wait before trying again.',
+          retryAfter: rate.retry_after,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rate.retry_after),
+            'X-RateLimit-Remaining': '0',
+          },
+        }
       )
     }
 
@@ -66,6 +83,7 @@ export async function POST(req: Request) {
         'Content-Type': 'audio/mpeg',
         'Content-Length': String(buffer.length),
         'Cache-Control': 'no-store',
+        'X-RateLimit-Remaining': String(rate.remaining),
       },
     })
   } catch (error: any) {

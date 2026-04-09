@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useRef, useState } from 'react'
+import { getSessionId } from '@/lib/analytics'
 
 type AudioContextType = {
   subtitle: string
@@ -57,14 +58,23 @@ export default function AudioProvider({ children }: { children: React.ReactNode 
       if (!source) {
         const res = await fetch('/api/tts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-amhrl-session-id': getSessionId(),
+          },
           body: JSON.stringify({ text }),
         })
 
         if (!res.ok) {
           const errorText = await res.text()
           console.error('TTS request failed:', res.status, errorText)
-          setVoiceError('Voice is temporarily unavailable. You can still continue scrolling.')
+
+          if (res.status === 429) {
+            setVoiceError('Too many voice requests. Please wait a moment and try again.')
+          } else {
+            setVoiceError('Voice is temporarily unavailable. You can still continue scrolling.')
+          }
+
           return false
         }
 
